@@ -2,18 +2,20 @@
 function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   const originalDescriptor = descriptor.value;
   const adjustedDescriptior: PropertyDescriptor = {
+    configurable: true,
     //Method so that we can excute some extra logic on our value property when users try to access this proeprty
     //We will use this to create an autobind feature to our code
     get() {
       //This in the getter method refers to whatever is responsbiel for triggering this getter method -> the getter method will be triggered by the concrete object to which it belongs (the object where we defined the getter)
       //This's context now will not be overwrriten by an event listeiner  becuase the getter is like an extra layer btween the fn being executed, the object to which it belongs and the event listeiner
-      return originalDescriptor.bind(this);
+      return originalDescriptor.bind(this); // bind the original method to this in context of its object
     },
   };
   //This descriptior object will overwrite the old descriptor/configuration the decorator is applied to (done by TS in background).
   return adjustedDescriptior;
 }
 
+//Project Input Class
 //Goal -> Get access to a template, and to get access to the id=app div and then redner the template in the app div
 class ProjectInput {
   hostElm: HTMLDivElement;
@@ -73,7 +75,6 @@ class ProjectInput {
     this.hostElm.insertAdjacentElement("afterbegin", this.formElm);
   }
 }
-class ProjectList {}
 
 const projectInput = new ProjectInput();
 projectInput.render();

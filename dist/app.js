@@ -8,6 +8,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 function AutoBind(_, _2, descriptor) {
     const originalDescriptor = descriptor.value;
     const adjustedDescriptior = {
+        configurable: true,
         get() {
             return originalDescriptor.bind(this);
         },
@@ -42,7 +43,5 @@ class ProjectInput {
 __decorate([
     AutoBind
 ], ProjectInput.prototype, "submitHandler", null);
-class ProjectList {
-}
 const projectInput = new ProjectInput();
 projectInput.render();
