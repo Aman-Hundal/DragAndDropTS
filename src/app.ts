@@ -55,10 +55,33 @@ class ProjectInput {
   private submitHandler(event: Event) {
     //Prevent default form submission -> which is an http request
     event.preventDefault();
+    const userInputs = this.gatherUserInput();
+    if (userInputs) {
+      console.log(userInputs);
+    }
+  }
 
-    console.log(this.titleInputElm.value);
-    console.log(this.descInputElm.value);
-    console.log(this.peopleInputElm.value);
+  //Take user input and clean the data
+  private gatherUserInput(): [string, string, number] | void {
+    const userTitle = this.titleInputElm.value;
+    const userDesc = this.descInputElm.value;
+    const userPeople = this.peopleInputElm.value;
+
+    //validation
+    if (!userTitle.trim()) {
+      alert("Please enter a value for a title");
+      return;
+    }
+    if (!userDesc.trim()) {
+      alert("Please enter a value for a description");
+      return;
+    }
+    if (Number.isNaN(parseInt(userPeople))) {
+      alert("Please enter a valid number");
+      return;
+    }
+
+    return [userTitle, userDesc, parseInt(userPeople)];
   }
 
   //Add event listeiner

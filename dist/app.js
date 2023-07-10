@@ -28,9 +28,28 @@ class ProjectInput {
     }
     submitHandler(event) {
         event.preventDefault();
-        console.log(this.titleInputElm.value);
-        console.log(this.descInputElm.value);
-        console.log(this.peopleInputElm.value);
+        const userInputs = this.gatherUserInput();
+        if (userInputs) {
+            console.log(userInputs);
+        }
+    }
+    gatherUserInput() {
+        const userTitle = this.titleInputElm.value;
+        const userDesc = this.descInputElm.value;
+        const userPeople = this.peopleInputElm.value;
+        if (!userTitle.trim()) {
+            alert("Please enter a value for a title");
+            return;
+        }
+        if (!userDesc.trim()) {
+            alert("Please enter a value for a description");
+            return;
+        }
+        if (Number.isNaN(parseInt(userPeople))) {
+            alert("Please enter a valid number");
+            return;
+        }
+        return [userTitle, userDesc, parseInt(userPeople)];
     }
     configure() {
         this.formElm.addEventListener("submit", this.submitHandler);
