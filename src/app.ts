@@ -54,8 +54,120 @@ const validation = (validateInput: Validatable) => {
   return isValid;
 };
 
+//Project State Mgmt Class (created with singelton principal learned in this course). Guarantees that we always work with the exact same object and will always only have 1 object of the class in the entire app
+
+//Listiner Type - > in a function type -> define the param types and the reutrn type
+type Listeiner = (items: Project[]) => void;
+
+class ProjectState {
+  private listeiners: Listeiner[] = [];
+  private projects: Project[] = [];
+  private static instance: ProjectState;
+
+  private constructor() {}
+
+  static getInstance() {
+    if (this.instance) {
+      return this.instance;
+    } else {
+      this.instance = new ProjectState();
+      return this.instance;
+    }
+  }
+
+  addListeiner(listeiner: Listeiner) {
+    this.listeiners.push(listeiner);
+  }
+
+  //Add item to the list whenever submit button clicked
+  addProject(title: string, desc: string, people: number) {
+    const newProject = new Project(
+      Math.random().toString(),
+      title,
+      desc,
+      people,
+      "active"
+    );
+    this.projects.push(newProject);
+
+    for (const listeiner of this.listeiners) {
+      //.slice returns copy of the array
+      listeiner(this.projects.slice());
+    }
+  }
+}
+//Global Constant - can be used anywhere in the file
+const projectState = ProjectState.getInstance();
+
+//Status Type for Projects made with Enums
+enum ProjectStatus {
+  Active,
+  Finished,
+}
+class Project {
+  constructor(
+    public id: string,
+    public title: string,
+    public desc: string,
+    public people: number,
+    public status: "active" | "finished"
+  ) {}
+}
+
+//Project List Class
+//Goal -> Get access to a template, and to get access to the id=app div and then redner the template in the app div + manage project list
+class ProjectList {
+  hostElm: HTMLDivElement;
+  templateElm: HTMLTemplateElement;
+  listElm: HTMLElement;
+  projectList: Project[] = [];
+
+  //Dyanamic ID as we will have more than one list of projects (active and inactive). We used a litteral union type as the dynamic id
+  constructor(private type: "active" | "finished") {
+    this.templateElm = document.getElementById(
+      "project-list"
+    ) as HTMLTemplateElement;
+    this.hostElm = document.getElementById("app") as HTMLDivElement;
+    const importedNode = document.importNode(this.templateElm.content, true);
+    //Store section elm to listElm property
+    this.listElm = importedNode.firstElementChild as HTMLElement;
+  }
+
+  render() {
+    //Give form elm css styling
+    this.listElm.id = `${this.type}-projects`;
+    const listId = `${this.type}-projects-list`;
+
+    //We are overwriting the projectList with the new projects which i get becausae something changed in project state
+    projectState.addListeiner((projects: Project[]) => {
+      this.projectList = projects;
+      this.renderProjects();
+    });
+    //Add content to section html
+    //add H2 title
+    this.listElm.querySelector(
+      "h2"
+    )!.textContent = `${this.type.toUpperCase()} PROJECTS`;
+    //Add projects to list + give id to list html
+    this.listElm.querySelector("ul")!.id = listId;
+    this.hostElm.insertAdjacentElement("beforeend", this.listElm);
+  }
+
+  private renderProjects() {
+    const relevantProjects = this.projectList.filter((project) => {
+      return project.status === this.type;
+    });
+    this.listElm.querySelector("ul")!.innerHTML = "";
+    for (const projectItm of relevantProjects) {
+      let listItem = document.createElement("li");
+      listItem.textContent = projectItm.title;
+      this.listElm.querySelector("ul")!.appendChild(listItem);
+    }
+  }
+}
+
 //Project Input Class
-//Goal -> Get access to a template, and to get access to the id=app div and then redner the template in the app div
+//Goal -> Get access to a template, and to get access to the id=app div and then redner the template in the app div + manage user input
 class ProjectInput {
   hostElm: HTMLDivElement;
   templateElm: HTMLTemplateElement;
@@ -94,10 +206,10 @@ class ProjectInput {
   private submitHandler(event: Event) {
     //Prevent default form submission -> which is an http request
     event.preventDefault();
-    const userInputs = this.gatherUserInput();
-    if (Array.isArray(userInputs)) {
-      const [title, desc, people] = userInputs;
-      console.log(title, desc, people);
+    const userProject = this.gatherUserInput();
+    if (userProject) {
+      const [title, desc, people] = userProject;
+      projectState.addProject(title, desc, people);
       this.clearInputs();
     }
   }
@@ -158,5 +270,9 @@ class ProjectInput {
   }
 }
 
+const activeProjectList = new ProjectList("active");
+const finishedProjectList = new ProjectList("finished");
 const projectInput = new ProjectInput();
 projectInput.render();
+activeProjectList.render();
+finishedProjectList.render();
