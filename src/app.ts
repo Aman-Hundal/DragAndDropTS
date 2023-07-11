@@ -14,6 +14,45 @@ function AutoBind(_: any, _2: string, descriptor: PropertyDescriptor) {
   //This descriptior object will overwrite the old descriptor/configuration the decorator is applied to (done by TS in background).
   return adjustedDescriptior;
 }
+//Validate Object Interface
+interface Validatable {
+  value: string | number;
+  required: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+//Validate function
+const validation = (validateInput: Validatable) => {
+  let isValid = true;
+
+  if (validateInput.required) {
+    isValid = isValid && validateInput.value.toString().trim().length !== 0;
+  }
+  //!= null is same as checking does not equal undefined or null (does not check for truthy ness)
+  if (
+    validateInput.minLength != null &&
+    typeof validateInput.value === "string"
+  ) {
+    isValid =
+      isValid && validateInput.value.trim().length >= validateInput.minLength;
+  }
+  if (
+    validateInput.maxLength != null &&
+    typeof validateInput.value === "string"
+  ) {
+    isValid =
+      isValid && validateInput.value.trim().length <= validateInput.maxLength;
+  }
+  if (validateInput.min != null && typeof validateInput.value === "number") {
+    isValid = isValid && validateInput.value >= validateInput.min;
+  }
+  if (validateInput.max != null && typeof validateInput.value === "number") {
+    isValid = isValid && validateInput.value <= validateInput.max;
+  }
+  return isValid;
+};
 
 //Project Input Class
 //Goal -> Get access to a template, and to get access to the id=app div and then redner the template in the app div
@@ -56,8 +95,10 @@ class ProjectInput {
     //Prevent default form submission -> which is an http request
     event.preventDefault();
     const userInputs = this.gatherUserInput();
-    if (userInputs) {
-      console.log(userInputs);
+    if (Array.isArray(userInputs)) {
+      const [title, desc, people] = userInputs;
+      console.log(title, desc, people);
+      this.clearInputs();
     }
   }
 
@@ -65,23 +106,41 @@ class ProjectInput {
   private gatherUserInput(): [string, string, number] | void {
     const userTitle = this.titleInputElm.value;
     const userDesc = this.descInputElm.value;
-    const userPeople = this.peopleInputElm.value;
+    const userPeople = parseInt(this.peopleInputElm.value);
 
-    //validation
-    if (!userTitle.trim()) {
-      alert("Please enter a value for a title");
-      return;
-    }
-    if (!userDesc.trim()) {
-      alert("Please enter a value for a description");
-      return;
-    }
-    if (Number.isNaN(parseInt(userPeople))) {
-      alert("Please enter a valid number");
-      return;
-    }
+    const titleValidateable: Validatable = {
+      value: userTitle,
+      required: true,
+    };
+    const descValidateable: Validatable = {
+      value: userDesc,
+      required: true,
+    };
 
-    return [userTitle, userDesc, parseInt(userPeople)];
+    const peopleValidateable: Validatable = {
+      value: userPeople,
+      required: true,
+      min: 1,
+      max: 5,
+    };
+
+    if (
+      !validation(titleValidateable) ||
+      !validation(peopleValidateable) ||
+      !validation(descValidateable)
+    ) {
+      alert("There was an error in your input. Please try again.");
+      return;
+    } else {
+      alert("Project saved");
+      return [userTitle, userDesc, userPeople];
+    }
+  }
+
+  private clearInputs() {
+    this.titleInputElm.value = "";
+    this.descInputElm.value = "";
+    this.peopleInputElm.value = "";
   }
 
   //Add event listeiner

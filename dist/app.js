@@ -15,6 +15,29 @@ function AutoBind(_, _2, descriptor) {
     };
     return adjustedDescriptior;
 }
+const validation = (validateInput) => {
+    let isValid = true;
+    if (validateInput.required) {
+        isValid = isValid && validateInput.value.toString().trim().length !== 0;
+    }
+    if (validateInput.minLength != null &&
+        typeof validateInput.value === "string") {
+        isValid =
+            isValid && validateInput.value.trim().length >= validateInput.minLength;
+    }
+    if (validateInput.maxLength != null &&
+        typeof validateInput.value === "string") {
+        isValid =
+            isValid && validateInput.value.trim().length <= validateInput.maxLength;
+    }
+    if (validateInput.min != null && typeof validateInput.value === "number") {
+        isValid = isValid && validateInput.value >= validateInput.min;
+    }
+    if (validateInput.max != null && typeof validateInput.value === "number") {
+        isValid = isValid && validateInput.value <= validateInput.max;
+    }
+    return isValid;
+};
 class ProjectInput {
     constructor() {
         this.templateElm = document.getElementById("project-input");
@@ -29,27 +52,45 @@ class ProjectInput {
     submitHandler(event) {
         event.preventDefault();
         const userInputs = this.gatherUserInput();
-        if (userInputs) {
-            console.log(userInputs);
+        if (Array.isArray(userInputs)) {
+            const [title, desc, people] = userInputs;
+            console.log(title, desc, people);
+            this.clearInputs();
         }
     }
     gatherUserInput() {
         const userTitle = this.titleInputElm.value;
         const userDesc = this.descInputElm.value;
-        const userPeople = this.peopleInputElm.value;
-        if (!userTitle.trim()) {
-            alert("Please enter a value for a title");
+        const userPeople = parseInt(this.peopleInputElm.value);
+        const titleValidateable = {
+            value: userTitle,
+            required: true,
+        };
+        const descValidateable = {
+            value: userDesc,
+            required: true,
+        };
+        const peopleValidateable = {
+            value: userPeople,
+            required: true,
+            min: 1,
+            max: 5,
+        };
+        if (!validation(titleValidateable) ||
+            !validation(peopleValidateable) ||
+            !validation(descValidateable)) {
+            alert("There was an error in your input. Please try again.");
             return;
         }
-        if (!userDesc.trim()) {
-            alert("Please enter a value for a description");
-            return;
+        else {
+            alert("Project saved");
+            return [userTitle, userDesc, userPeople];
         }
-        if (Number.isNaN(parseInt(userPeople))) {
-            alert("Please enter a valid number");
-            return;
-        }
-        return [userTitle, userDesc, parseInt(userPeople)];
+    }
+    clearInputs() {
+        this.titleInputElm.value = "";
+        this.descInputElm.value = "";
+        this.peopleInputElm.value = "";
     }
     configure() {
         this.formElm.addEventListener("submit", this.submitHandler);
